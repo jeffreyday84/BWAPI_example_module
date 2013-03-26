@@ -7,6 +7,8 @@ protected:
 	std::vector<BWAPI::Unit*> army;
 	BaseAIModule* ai_module;
 	BWAPI::Position current_attack;
+	BWAPI::Unit* next_attack;
+	void setNextAttack();
 public:
 	ArmyManager(void);
 	~ArmyManager(void);
