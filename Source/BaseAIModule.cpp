@@ -283,24 +283,6 @@ void BaseAIModule::onOverlordAttacked(Unit* unit)
 /**
  * Internal functions supporting the above events
  */
-void BaseAIModule::checkReadinessQueue()
-{
-	for(int i = unit_readiness_queue.size() - 1; i >= 0; i--)
-	{
-		if(
-			(
-				!unit_readiness_queue[i]->getType().isBuilding() && 
-				unit_readiness_queue[i]->canIssueCommand(UnitCommand::stop(unit_readiness_queue[i]))
-			) ||
-			(unit_readiness_queue[i]->getType().isBuilding() && !unit_readiness_queue[i]->isMorphing())
-		)
-		{
-			onUnitReady(unit_readiness_queue[i]);
-			unit_readiness_queue.erase(unit_readiness_queue.begin() + i);
-		}
-	}
-}
-
 void BaseAIModule::buildHatchery()
 {
 	static Unit* worker = 0;
@@ -377,6 +359,24 @@ bool BaseAIModule::buildSpawningPool()
 /**
  * Begin forwarded events
  */
+void BaseAIModule::checkReadinessQueue()
+{
+	for(int i = unit_readiness_queue.size() - 1; i >= 0; i--)
+	{
+		if(
+			(
+				!unit_readiness_queue[i]->getType().isBuilding() && 
+				unit_readiness_queue[i]->canIssueCommand(UnitCommand::stop(unit_readiness_queue[i]))
+			) ||
+			(unit_readiness_queue[i]->getType().isBuilding() && !unit_readiness_queue[i]->isMorphing())
+		)
+		{
+			onUnitReady(unit_readiness_queue[i]);
+			unit_readiness_queue.erase(unit_readiness_queue.begin() + i);
+		}
+	}
+}
+
 void BaseAIModule::onUnitMorph(BWAPI::Unit* unit)
 {
 	//Broodwar->printf("%s morphed",unit->getType().getName().c_str());
@@ -384,6 +384,10 @@ void BaseAIModule::onUnitMorph(BWAPI::Unit* unit)
 	{
 		if(unit->getType().canMove() || unit->getType().isBuilding()) {
 			unit_readiness_queue.push_back(unit);
+		}
+		else
+		{
+			onUnitReady(unit);
 		}
 	}
 }
@@ -395,6 +399,10 @@ void BaseAIModule::onUnitCreate(BWAPI::Unit* unit)
 	{
 		if(unit->getType().canMove() || unit->getType().isBuilding()) {
 			unit_readiness_queue.push_back(unit);
+		}
+		else
+		{
+			onUnitReady(unit);
 		}
 	}
 }
