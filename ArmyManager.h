@@ -1,16 +1,16 @@
 #pragma once
-#include "source\ExampleAIModule.h"
+#include "source\BaseAIModule.h"
 
 class ArmyManager
 {
 protected:
 	std::vector<BWAPI::Unit*> army;
-	ExampleAIModule* ai_module;
+	BaseAIModule* ai_module;
 	BWAPI::Position current_attack;
 public:
 	ArmyManager(void);
 	~ArmyManager(void);
-	ArmyManager(ExampleAIModule*);
+	ArmyManager(BaseAIModule*);
 	virtual void addArmyUnit(BWAPI::Unit*);
 	virtual void heartbeat();
 };

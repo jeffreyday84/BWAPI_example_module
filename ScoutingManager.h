@@ -6,18 +6,18 @@
 #include <algorithm>
 #include <map>
 #include <set>
-#include "source\ExampleAIModule.h"
+#include "source\BaseAIModule.h"
 
 class ScoutingManager
 {
 protected:
 	std::vector<BWAPI::Unit*> overlords;
 	std::vector<BWAPI::Unit*> scouts;
-	ExampleAIModule* ai_module;
+	BaseAIModule* ai_module;
 	void sendOverlords();
 public:
 	ScoutingManager(void);
-	ScoutingManager(ExampleAIModule*);
+	ScoutingManager(BaseAIModule*);
 	void addScout(BWAPI::Unit*);
 	void heartbeat();
 };

@@ -8,7 +8,7 @@ ArmyManager::~ArmyManager(void)
 {
 }
 
-ArmyManager::ArmyManager(ExampleAIModule* module)
+ArmyManager::ArmyManager(BaseAIModule* module)
 {
 	ai_module = module;
 	current_attack = ai_module->getMapLocations()->getDefaultAttackPosition();

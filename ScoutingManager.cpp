@@ -1,13 +1,13 @@
 #pragma once
 #include "ScoutingManager.h"
-//#include "source\ExampleAIModule.h"
+//#include "source\BaseAIModule.h"
 using namespace BWAPI;
 
 ScoutingManager::ScoutingManager(void)
 {
 }
 
-ScoutingManager::ScoutingManager(ExampleAIModule* parent_module)
+ScoutingManager::ScoutingManager(BaseAIModule* parent_module)
 {
 	ai_module = parent_module;
 }

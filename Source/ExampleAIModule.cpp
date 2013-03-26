@@ -1,4 +1,4 @@
-#include "ExampleAIModule.h"
+#include "BaseAIModule.h"
 #include "..\ResourceManager.h"
 #include "..\ScoutingManager.h"
 #include "..\MapLocations.h"
@@ -11,7 +11,7 @@ std::vector<BWAPI::Unit*> hatcheries;
 std::map<BWAPI::Unit*,BWAPI::Unit*> worker_mineral_orders;
 bool overlord_building = false;
 
-void ExampleAIModule::onStart()
+void BaseAIModule::onStart()
 {
 	workers_morphing = 0;
 	need_spawning_pool = true;
@@ -59,7 +59,7 @@ void ExampleAIModule::onStart()
 	}
 }
 
-bool ExampleAIModule::hasFullLarva()
+bool BaseAIModule::hasFullLarva()
 {
 	bool retval = false;
 	for(unsigned int i = 0; i < hatcheries.size() && !retval; ++i)
@@ -72,7 +72,7 @@ bool ExampleAIModule::hasFullLarva()
 	return retval;
 }
 
-bool ExampleAIModule::hasLarva()
+bool BaseAIModule::hasLarva()
 {
 	bool retval = false;
 	for(unsigned int i = 0; i < hatcheries.size() && !retval; ++i)
@@ -85,7 +85,7 @@ bool ExampleAIModule::hasLarva()
 	return retval;
 }
 
-int ExampleAIModule::make_unit(UnitType type, int num) 
+int BaseAIModule::make_unit(UnitType type, int num) 
 {
 	int retval = 0;
 	for(unsigned int i = 0; i < hatcheries.size() && num > 0; ++i)
@@ -106,17 +106,17 @@ int ExampleAIModule::make_unit(UnitType type, int num)
 	return retval;
 }
 
-int ExampleAIModule::make_overlord(int num)
+int BaseAIModule::make_overlord(int num)
 {
 	return make_unit(UnitTypes::Zerg_Overlord, num);
 }
 
-int ExampleAIModule::make_worker(int num)
+int BaseAIModule::make_worker(int num)
 {
 	return make_unit(UnitTypes::Zerg_Drone, num);
 }
 
-void ExampleAIModule::onUnitReady(Unit* unit)
+void BaseAIModule::onUnitReady(Unit* unit)
 {
 	Broodwar->printf("%s ready",unit->getType().getName().c_str());
 	if(unit->getType().getID() == UnitTypes::Zerg_Zergling)
@@ -144,7 +144,7 @@ void ExampleAIModule::onUnitReady(Unit* unit)
 	}
 }
 
-void ExampleAIModule::checkReadinessQueue()
+void BaseAIModule::checkReadinessQueue()
 {
 	for(int i = unit_readiness_queue.size() - 1; i >= 0; i--)
 	{
@@ -162,7 +162,7 @@ void ExampleAIModule::checkReadinessQueue()
 	}
 }
 
-void ExampleAIModule::onOverlordAttacked(Unit* unit)
+void BaseAIModule::onOverlordAttacked(Unit* unit)
 {
 	int before = attacked_overlords.size();
 	attacked_overlords.insert(unit->getID());
@@ -171,7 +171,7 @@ void ExampleAIModule::onOverlordAttacked(Unit* unit)
 	}
 }
 
-void ExampleAIModule::onFrame()
+void BaseAIModule::onFrame()
 {
 	checkReadinessQueue();
 	if(Broodwar->getFrameCount() > 1) 
@@ -251,7 +251,7 @@ void ExampleAIModule::onFrame()
 	}
 }
 
-bool ExampleAIModule::createSpawningPool()
+bool BaseAIModule::createSpawningPool()
 {
 	static Position* worker_position;
 	static Unit* worker;
@@ -280,7 +280,7 @@ bool ExampleAIModule::createSpawningPool()
 	return retval;
 }
 
-void ExampleAIModule::makeHatchery()
+void BaseAIModule::makeHatchery()
 {
 	static Unit* worker = 0;
 	static int tile_offset = 0;
@@ -327,27 +327,27 @@ void ExampleAIModule::makeHatchery()
 /**
  * Begin getters
  */
-ExampleAIModule* ExampleAIModule::getUnitCreator()
+BaseAIModule* BaseAIModule::getUnitCreator()
 {
 	return this;
 }
 
-ResourceManager* ExampleAIModule::getResourceManager()
+ResourceManager* BaseAIModule::getResourceManager()
 {
 	return resource_manager;
 }
 
-ScoutingManager* ExampleAIModule::getScoutingManager()
+ScoutingManager* BaseAIModule::getScoutingManager()
 {
 	return scouting_manager;
 }
 
-MapLocations* ExampleAIModule::getMapLocations()
+MapLocations* BaseAIModule::getMapLocations()
 {
 	return map_locations;
 }
 
-BWAPI::Unit* ExampleAIModule::getMainBase()
+BWAPI::Unit* BaseAIModule::getMainBase()
 {
 	return main_base;
 }
@@ -355,7 +355,7 @@ BWAPI::Unit* ExampleAIModule::getMainBase()
 /**
  * Begin pre-ready unit declarations
  */
-void ExampleAIModule::onUnitMorph(BWAPI::Unit* unit)
+void BaseAIModule::onUnitMorph(BWAPI::Unit* unit)
 {
 	Broodwar->printf("%s morphed",unit->getType().getName().c_str());
 	if(unit->getPlayer() == Broodwar->self() && Broodwar->getFrameCount()>1)
@@ -366,7 +366,7 @@ void ExampleAIModule::onUnitMorph(BWAPI::Unit* unit)
 	}
 }
 
-void ExampleAIModule::onUnitCreate(BWAPI::Unit* unit)
+void BaseAIModule::onUnitCreate(BWAPI::Unit* unit)
 {
 	Broodwar->printf("%s created",unit->getType().getName().c_str());
 	if(unit->getPlayer() == Broodwar->self() && Broodwar->getFrameCount()>1)
@@ -380,12 +380,12 @@ void ExampleAIModule::onUnitCreate(BWAPI::Unit* unit)
 /**
  * Begin pro forma declarations
  */
-void ExampleAIModule::onUnitComplete(BWAPI::Unit *unit)
+void BaseAIModule::onUnitComplete(BWAPI::Unit *unit)
 {
 
 }
 
-void ExampleAIModule::onEnd(bool isWinner)
+void BaseAIModule::onEnd(bool isWinner)
 {
 	if (isWinner)
 	{
@@ -393,93 +393,93 @@ void ExampleAIModule::onEnd(bool isWinner)
 	}
 }
 
-void ExampleAIModule::onSendText(std::string text)
+void BaseAIModule::onSendText(std::string text)
 {
 
 }
 
-void ExampleAIModule::sendMessage(const char* text)
+void BaseAIModule::sendMessage(const char* text)
 {
 	Broodwar->printf(text);
 }
 
-void ExampleAIModule::onReceiveText(BWAPI::Player* player, std::string text)
+void BaseAIModule::onReceiveText(BWAPI::Player* player, std::string text)
 {
 
 }
 
-void ExampleAIModule::onPlayerLeft(BWAPI::Player* player)
+void BaseAIModule::onPlayerLeft(BWAPI::Player* player)
 {
 
 }
 
-void ExampleAIModule::onNukeDetect(BWAPI::Position target)
+void BaseAIModule::onNukeDetect(BWAPI::Position target)
 {
 
 }
 
-void ExampleAIModule::onUnitDiscover(BWAPI::Unit* unit)
+void BaseAIModule::onUnitDiscover(BWAPI::Unit* unit)
 {
 
 }
 
-void ExampleAIModule::onUnitEvade(BWAPI::Unit* unit)
+void BaseAIModule::onUnitEvade(BWAPI::Unit* unit)
 {
 
 }
 
-void ExampleAIModule::onUnitShow(BWAPI::Unit* unit)
+void BaseAIModule::onUnitShow(BWAPI::Unit* unit)
 {
 
 }
 
-void ExampleAIModule::onUnitHide(BWAPI::Unit* unit)
+void BaseAIModule::onUnitHide(BWAPI::Unit* unit)
 {
 
 }
 
-void ExampleAIModule::onUnitDestroy(BWAPI::Unit* unit)
+void BaseAIModule::onUnitDestroy(BWAPI::Unit* unit)
 {
 
 }
 
-void ExampleAIModule::onUnitRenegade(BWAPI::Unit* unit)
+void BaseAIModule::onUnitRenegade(BWAPI::Unit* unit)
 {
 
 }
 
-void ExampleAIModule::onSaveGame(std::string gameName)
+void BaseAIModule::onSaveGame(std::string gameName)
 {
 
 }
 
 
-void ExampleAIModule::drawStats()
+void BaseAIModule::drawStats()
 {
 
 }
 
-void ExampleAIModule::drawBullets()
+void BaseAIModule::drawBullets()
 {
 
 }
 
-void ExampleAIModule::drawVisibilityData()
+void BaseAIModule::drawVisibilityData()
 {
 
 }
 
-void ExampleAIModule::drawTerrainData()
+void BaseAIModule::drawTerrainData()
 {
 
 }
 
-void ExampleAIModule::showPlayers()
+void BaseAIModule::showPlayers()
 {
 
 }
 
-void ExampleAIModule::showForces()
+void BaseAIModule::showForces()
 {
 
 }

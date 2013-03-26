@@ -1,10 +1,10 @@
 #pragma once
-#include "source\ExampleAIModule.h"
+#include "source\BaseAIModule.h"
 
 class MapLocations
 {
 protected:
-	ExampleAIModule* ai_module;
+	BaseAIModule* ai_module;
 	std::vector<BWAPI::TilePosition*> hatchery_positions;
 	BWAPI::TilePosition pool_position;
 	BWAPI::Position default_attack_position;
@@ -13,7 +13,7 @@ protected:
 public:
 	MapLocations(void);
 	~MapLocations(void);
-	MapLocations(ExampleAIModule*);
+	MapLocations(BaseAIModule*);
 	std::vector<BWAPI::TilePosition*>& getHatcheryPositions();
 	BWAPI::TilePosition* popHatcheryPosition();
 	BWAPI::TilePosition getPoolPosition();

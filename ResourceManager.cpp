@@ -1,5 +1,5 @@
 #include "ResourceManager.h"
-#include "source\ExampleAIModule.h"
+#include "source\BaseAIModule.h"
 using namespace BWAPI;
 
 std::vector<BWAPI::Unit*> ResourceManager::bases;
@@ -18,7 +18,7 @@ bool sortByDistanceFromBase(BWAPI::Unit *unit1, BWAPI::Unit *unit2)
 	return unit1_distance > unit2_distance;
 }
 
-ResourceManager::ResourceManager(ExampleAIModule* module)
+ResourceManager::ResourceManager(BaseAIModule* module)
 {
 	ai_module = module;
 };

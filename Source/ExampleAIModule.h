@@ -81,7 +81,7 @@ public:
 	void make_worker_gather(BWAPI::Unit *unit);
 	void make_worker_gather_min(BWAPI::Unit *worker, BWAPI::Unit *min);
 	bool createSpawningPool();
-	ExampleAIModule* getUnitCreator();
+	BaseAIModule* getUnitCreator();
 	ResourceManager* getResourceManager();
 	ScoutingManager* getScoutingManager();
 	MapLocations* getMapLocations();

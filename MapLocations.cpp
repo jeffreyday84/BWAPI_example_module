@@ -9,7 +9,7 @@ MapLocations::~MapLocations(void)
 {
 }
 
-MapLocations::MapLocations(ExampleAIModule* module)
+MapLocations::MapLocations(BaseAIModule* module)
 {
 	ai_module = module;
 	TilePosition main_base = ai_module->getMainBase()->getTilePosition();
