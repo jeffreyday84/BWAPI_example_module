@@ -43,6 +43,7 @@ void ResourceManager::addBase(BWAPI::Unit* unit)
 		}
 	}
 	std::sort(newmin.begin(), newmin.end(), sortByDistanceFromBase);
+	default_mineral = newmin.front();
 	for(unsigned int i=0; i < newmin.size(); i++)
 	{
 		minerals_to_work.push_back(newmin[i]);
@@ -95,6 +96,14 @@ BWAPI::Unit* ResourceManager::getWorker() {
 			}
 		}
 		workers.erase(workers.begin() + current_pos);
+		if(retval->getOrderTarget()->getType().isMineralField()) {
+			minerals_to_work.push_back(retval->getOrderTarget());
+		}
+		else
+		{
+			Broodwar->printf("Invalid target, defaulting to minerals");
+			minerals_to_work.push_back(default_mineral);
+		}
 	}
 	return retval;
 }
@@ -106,7 +115,7 @@ int ResourceManager::getNumMinsToWork()
 
 int ResourceManager::getTargetMinsToWork()
 {
-	return minerals_to_work.size();
+	return min_min;
 }
 
 int ResourceManager::getNumWorkers()

@@ -19,6 +19,7 @@ protected:
 	std::vector<BWAPI::Unit*> workers;
 	static std::vector<BWAPI::Unit*> bases;
 	int min_min;
+	BWAPI::Unit* default_mineral;
 public:
 	const unsigned static int FIND_MINERAL_DISTANCE = 220;
 	ResourceManager();

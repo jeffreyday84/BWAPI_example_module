@@ -174,7 +174,7 @@ void BaseAIModule::onFrame()
 		}
 		else
 		{
-			if((resource_manager->getTargetMinsToWork() + workers_morphing) < resource_manager->getNumMinsToWork())
+			if(!stop_workers && (resource_manager->getTargetMinsToWork() + workers_morphing) < resource_manager->getNumMinsToWork())
 			{
 				workers_morphing += makeWorker();
 			}
@@ -225,7 +225,7 @@ void BaseAIModule::onFrame()
 		}
 	}
 
-	if(Broodwar->getFrameCount()%30==0) {
+	if(false && Broodwar->getFrameCount()%100==0) {
 		for(unsigned int i = 0; i < unit_readiness_queue.size(); i++)
 		{
 			Broodwar->printf("Pending unit %i of %i type %s",
@@ -245,7 +245,7 @@ void BaseAIModule::onFrame()
 
 void BaseAIModule::onUnitReady(Unit* unit)
 {
-	Broodwar->printf("%s ready",unit->getType().getName().c_str());
+	//Broodwar->printf("%s ready",unit->getType().getName().c_str());
 	if(unit->getType().getID() == UnitTypes::Zerg_Zergling)
 	{
 		army_manager->addArmyUnit(unit);
@@ -379,7 +379,7 @@ bool BaseAIModule::buildSpawningPool()
  */
 void BaseAIModule::onUnitMorph(BWAPI::Unit* unit)
 {
-	Broodwar->printf("%s morphed",unit->getType().getName().c_str());
+	//Broodwar->printf("%s morphed",unit->getType().getName().c_str());
 	if(unit->getPlayer() == Broodwar->self() && Broodwar->getFrameCount()>1)
 	{
 		if(unit->getType().canMove() || unit->getType().isBuilding()) {
@@ -390,7 +390,7 @@ void BaseAIModule::onUnitMorph(BWAPI::Unit* unit)
 
 void BaseAIModule::onUnitCreate(BWAPI::Unit* unit)
 {
-	Broodwar->printf("%s created",unit->getType().getName().c_str());
+	//Broodwar->printf("%s created",unit->getType().getName().c_str());
 	if(unit->getPlayer() == Broodwar->self() && Broodwar->getFrameCount()>1)
 	{
 		if(unit->getType().canMove() || unit->getType().isBuilding()) {
