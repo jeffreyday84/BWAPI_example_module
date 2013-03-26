@@ -180,11 +180,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Source\Dll.cpp"
+				RelativePath=".\Source\BaseAIModule.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\Source\ExampleAIModule.cpp"
+				RelativePath=".\Source\Dll.cpp"
 				>
 			</File>
 			<File
@@ -214,7 +214,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Source\ExampleAIModule.h"
+				RelativePath=".\Source\BaseAIModule.h"
 				>
 			</File>
 			<File
