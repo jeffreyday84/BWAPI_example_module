@@ -108,3 +108,8 @@ int ResourceManager::getTargetMinsToWork()
 {
 	return minerals_to_work.size();
 }
+
+int ResourceManager::getNumWorkers()
+{
+	return workers.size();
+}

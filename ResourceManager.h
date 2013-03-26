@@ -29,4 +29,5 @@ public:
 	BWAPI::Unit* getWorker();
 	int getNumMinsToWork();
 	int getTargetMinsToWork();
+	int getNumWorkers();
 };
