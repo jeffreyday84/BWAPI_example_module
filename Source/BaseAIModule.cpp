@@ -7,56 +7,32 @@ using namespace BWAPI;
 bool analyzed;
 bool analysis_just_finished;
 std::vector<BWAPI::Unit*> minerals_to_work;
-std::vector<BWAPI::Unit*> hatcheries;
 std::map<BWAPI::Unit*,BWAPI::Unit*> worker_mineral_orders;
 bool overlord_building = false;
 
-void BaseAIModule::onStart()
+/**
+ * Begin game state functions
+ */
+BWAPI::Unit* BaseAIModule::getMainBase()
 {
-	workers_morphing = 0;
-	need_spawning_pool = true;
-	spawning_pool_finished = slow_workers = stop_workers = starting_pool = false;
-	spawning_pool = 0;
-	Broodwar->sendText("Hello world! Jeff here!");
-	// Enable some cheat flags
-	Broodwar->enableFlag(Flag::UserInput);
-	// Uncomment to enable complete map information
-	//Broodwar->enableFlag(Flag::CompleteMapInformation);
+	return main_base;
+}
 
-	if (Broodwar->isReplay())
+/**
+ * Begin utility functions
+ */
+
+bool BaseAIModule::hasLarva()
+{
+	bool retval = false;
+	for(unsigned int i = 0; i < hatcheries.size() && !retval; ++i)
 	{
-		throw "This is a replay jackass";
-	}
-	else
-	{
-		resource_manager = new ResourceManager(this);
-		scouting_manager = new ScoutingManager(this);
-
-		for(std::set<Unit*>::const_iterator i=Broodwar->self()->getUnits().begin();i!=Broodwar->self()->getUnits().end();i++)
-		{
-			if ((*i)->getType().isResourceDepot())
-			{
-				resource_manager->addBase(*i);
-				hatcheries.push_back(*i);
-				main_base = *i;
-			}
-		}
-
-		map_locations = new MapLocations(this);
-		army_manager = new ArmyManager(this);
-
-		for(std::set<Unit*>::const_iterator i=Broodwar->self()->getUnits().begin();i!=Broodwar->self()->getUnits().end();i++)
-		{
-			if ((*i)->getType().isWorker())
-			{
-				resource_manager->addWorker(*i);
-			}
-			else if ((*i)->getType().getID() == UnitTypes::Zerg_Overlord)
-			{
-				scouting_manager->addScout(*i);
-			}
+		std::set<Unit*> larva = hatcheries[i]->getLarva();
+		if(larva.size() > 0) {
+			retval = true;
 		}
 	}
+	return retval;
 }
 
 bool BaseAIModule::hasFullLarva()
@@ -72,20 +48,7 @@ bool BaseAIModule::hasFullLarva()
 	return retval;
 }
 
-bool BaseAIModule::hasLarva()
-{
-	bool retval = false;
-	for(unsigned int i = 0; i < hatcheries.size() && !retval; ++i)
-	{
-		std::set<Unit*> larva = hatcheries[i]->getLarva();
-		if(larva.size() > 0) {
-			retval = true;
-		}
-	}
-	return retval;
-}
-
-int BaseAIModule::make_unit(UnitType type, int num) 
+int BaseAIModule::makeUnit(UnitType type, int num) 
 {
 	int retval = 0;
 	for(unsigned int i = 0; i < hatcheries.size() && num > 0; ++i)
@@ -106,14 +69,178 @@ int BaseAIModule::make_unit(UnitType type, int num)
 	return retval;
 }
 
-int BaseAIModule::make_overlord(int num)
+int BaseAIModule::makeOverlord(int num)
 {
-	return make_unit(UnitTypes::Zerg_Overlord, num);
+	return makeUnit(UnitTypes::Zerg_Overlord, num);
 }
 
-int BaseAIModule::make_worker(int num)
+int BaseAIModule::makeWorker(int num)
 {
-	return make_unit(UnitTypes::Zerg_Drone, num);
+	return makeUnit(UnitTypes::Zerg_Drone, num);
+}
+
+/**
+ * Begin manager getters
+ */
+BaseAIModule* BaseAIModule::getUnitCreator()
+{
+	return this;
+}
+
+ResourceManager* BaseAIModule::getResourceManager()
+{
+	return resource_manager;
+}
+
+ScoutingManager* BaseAIModule::getScoutingManager()
+{
+	return scouting_manager;
+}
+
+MapLocations* BaseAIModule::getMapLocations()
+{
+	return map_locations;
+}
+
+/**
+ * Begin used events and their internal functions
+ */
+void BaseAIModule::onStart()
+{
+	// Begin!
+	if (Broodwar->isReplay())
+	{
+		throw "This is a replay and unsupported by this AI.";
+	}
+	Broodwar->sendText("Hello world!");
+	Broodwar->enableFlag(Flag::UserInput);
+
+	// Init internal variables
+	workers_morphing = 0;
+	need_spawning_pool = true;
+	spawning_pool_finished = false;
+	slow_workers = false;
+	stop_workers = false;
+	starting_pool = false;
+	spawning_pool = 0;
+
+	// Init managers and units
+	resource_manager = new ResourceManager(this);
+	scouting_manager = new ScoutingManager(this);
+
+	for(std::set<Unit*>::const_iterator i=Broodwar->self()->getUnits().begin();i!=Broodwar->self()->getUnits().end();i++)
+	{
+		if ((*i)->getType().isResourceDepot())
+		{
+			resource_manager->addBase(*i);
+			hatcheries.push_back(*i);
+			main_base = *i;
+		}
+	}
+
+	map_locations = new MapLocations(this);
+	army_manager = new ArmyManager(this);
+
+	for(std::set<Unit*>::const_iterator i=Broodwar->self()->getUnits().begin();i!=Broodwar->self()->getUnits().end();i++)
+	{
+		if ((*i)->getType().isWorker())
+		{
+			resource_manager->addWorker(*i);
+		}
+		else if ((*i)->getType().getID() == UnitTypes::Zerg_Overlord)
+		{
+			scouting_manager->addScout(*i);
+		}
+	}
+}
+
+void BaseAIModule::onFrame()
+{
+	checkReadinessQueue();
+	if(Broodwar->getFrameCount() > 1) 
+	{
+		if(Broodwar->getFrameCount()%12==0) 
+		{
+			scouting_manager->heartbeat();
+			army_manager->heartbeat();
+		}
+
+		if(build_queue.size())
+		{
+			if(makeUnit(build_queue.front()))
+			{
+				build_queue.pop();
+			}
+		}
+		else
+		{
+			if((resource_manager->getTargetMinsToWork() + workers_morphing) < resource_manager->getNumMinsToWork())
+			{
+				workers_morphing += makeWorker();
+			}
+			if(Broodwar->self()->supplyTotal() <= Broodwar->self()->supplyUsed()) {
+				if(Broodwar->self()->minerals() >= 100 && !overlord_building) {
+					if(makeOverlord()) overlord_building = true;
+				}
+			} else if(overlord_building) {
+				overlord_building = false;
+			}
+
+			if(!stop_workers)
+			{
+				if(slow_workers && workers_morphing == 3)
+				{
+					stop_workers = true;
+				}
+				else if(resource_manager->getNumMinsToWork() > workers_morphing && Broodwar->self()->minerals() >= 50 && Broodwar->self()->supplyTotal() > Broodwar->self()->supplyUsed())
+				{
+					workers_morphing += makeWorker();
+				}
+			}
+
+			if(spawning_pool_finished)
+			{
+				makeUnit(UnitTypes::Zerg_Zergling, 3);
+			}
+
+			if(
+					(starting_pool && need_spawning_pool) || 
+					(need_spawning_pool && Broodwar->self()->minerals() >= 180)
+			) {
+				need_spawning_pool = !buildSpawningPool();
+				starting_pool = true;
+				stop_workers = true;
+				slow_workers = true;
+				if(!need_spawning_pool)
+				{
+					starting_pool = false;
+					stop_workers = false;
+				}
+			}
+
+			if(Broodwar->self()->minerals() > 350 && Broodwar->self()->supplyUsed() >= 14)
+			{
+				buildHatchery();
+			}
+		}
+	}
+
+	if(Broodwar->getFrameCount()%30==0) {
+		for(unsigned int i = 0; i < unit_readiness_queue.size(); i++)
+		{
+			Broodwar->printf("Pending unit %i of %i type %s",
+				i+1,
+				unit_readiness_queue.size(),
+				unit_readiness_queue[i]->getType().getName().c_str()
+			);
+		}
+		Broodwar->printf(
+							"Have %i minerals of target %i minerals unworked by %i workers",
+							resource_manager->getNumMinsToWork(), 
+							resource_manager->getTargetMinsToWork(),
+							resource_manager->getNumWorkers()
+		);
+	}
 }
 
 void BaseAIModule::onUnitReady(Unit* unit)
@@ -144,6 +271,18 @@ void BaseAIModule::onUnitReady(Unit* unit)
 	}
 }
 
+void BaseAIModule::onOverlordAttacked(Unit* unit)
+{
+	int before = attacked_overlords.size();
+	attacked_overlords.insert(unit->getID());
+	if(before != attacked_overlords.size()) {
+		build_queue.push(UnitTypes::Zerg_Overlord);
+	}
+}
+
+/**
+ * Internal functions supporting the above events
+ */
 void BaseAIModule::checkReadinessQueue()
 {
 	for(int i = unit_readiness_queue.size() - 1; i >= 0; i--)
@@ -162,125 +301,7 @@ void BaseAIModule::checkReadinessQueue()
 	}
 }
 
-void BaseAIModule::onOverlordAttacked(Unit* unit)
-{
-	int before = attacked_overlords.size();
-	attacked_overlords.insert(unit->getID());
-	if(before != attacked_overlords.size()) {
-		build_queue.push(UnitTypes::Zerg_Overlord);
-	}
-}
-
-void BaseAIModule::onFrame()
-{
-	checkReadinessQueue();
-	if(Broodwar->getFrameCount() > 1) 
-	{
-		if(Broodwar->getFrameCount()%12==0) scouting_manager->heartbeat();
-
-		if(build_queue.size())
-		{
-			if(make_unit(build_queue.front()))
-			{
-				build_queue.pop();
-			}
-		}
-		else
-		{
-			if((resource_manager->getTargetMinsToWork() + workers_morphing) < resource_manager->getNumMinsToWork())
-			{
-				workers_morphing += make_worker();
-			}
-			if(Broodwar->self()->supplyTotal() <= Broodwar->self()->supplyUsed()) {
-				if(Broodwar->self()->minerals() >= 100 && !overlord_building) {
-					if(make_overlord()) overlord_building = true;
-				}
-			} else if(overlord_building) {
-				overlord_building = false;
-			}
-
-			if(!stop_workers)
-			{
-				if(slow_workers && workers_morphing == 3)
-				{
-					stop_workers = true;
-				}
-				else if(resource_manager->getNumMinsToWork() > workers_morphing && Broodwar->self()->minerals() >= 50 && Broodwar->self()->supplyTotal() > Broodwar->self()->supplyUsed())
-				{
-					workers_morphing += make_worker();
-				}
-			}
-
-			if(spawning_pool_finished)
-			{
-				make_unit(UnitTypes::Zerg_Zergling, 3);
-			}
-
-			if(
-					(starting_pool && need_spawning_pool) || 
-					(need_spawning_pool && Broodwar->self()->minerals() >= 180)
-			) {
-				need_spawning_pool = !createSpawningPool();
-				starting_pool = true;
-				stop_workers = true;
-				slow_workers = true;
-				if(!need_spawning_pool)
-				{
-					starting_pool = false;
-					stop_workers = false;
-				}
-			}
-
-			if(Broodwar->self()->minerals() > 350 && Broodwar->self()->supplyUsed() >= 14)
-			{
-				makeHatchery();
-			}
-		}
-	}
-
-	if(Broodwar->getFrameCount()%30==0) {
-		for(unsigned int i = 0; i < unit_readiness_queue.size(); i++)
-		{
-			Broodwar->printf("Pending unit %i of %i type %s",
-				i+1,
-				unit_readiness_queue.size(),
-				unit_readiness_queue[i]->getType().getName().c_str()
-			);
-		}
-		Broodwar->printf("Have %i minerals of target %i minerals unworked",resource_manager->getNumMinsToWork(), resource_manager->getTargetMinsToWork());
-	}
-}
-
-bool BaseAIModule::createSpawningPool()
-{
-	static Position* worker_position;
-	static Unit* worker;
-	bool retval = false;
-	if(!worker_position)
-	{
-		TilePosition base_pos = main_base->getTilePosition();
-		worker_position = new Position(TilePosition(map_locations->getPoolPosition().x() + 2, map_locations->getPoolPosition().y() + 1));
-	}
-	if(!worker)
-	{
-		worker = resource_manager->getWorker();
-	}
-	if(!worker->getType().isWorker()) {
-		retval = true;
-		delete worker_position;
-		worker_position = 0;
-	} else {
-		if(worker && Broodwar->self()->minerals() < 200 && worker->getOrder().getID() != Orders::Move)
-		{
-			worker->rightClick(*worker_position);
-		} else if(worker && Broodwar->self()->minerals() >= 200) {
-			worker->build(map_locations->getPoolPosition(), UnitTypes::Zerg_Spawning_Pool);
-		}
-	}
-	return retval;
-}
-
-void BaseAIModule::makeHatchery()
+void BaseAIModule::buildHatchery()
 {
 	static Unit* worker = 0;
 	static int tile_offset = 0;
@@ -324,36 +345,37 @@ void BaseAIModule::makeHatchery()
 	}
 }
 
+bool BaseAIModule::buildSpawningPool()
+{
+	static Position* worker_position;
+	static Unit* worker;
+	bool retval = false;
+	if(!worker_position)
+	{
+		TilePosition base_pos = main_base->getTilePosition();
+		worker_position = new Position(TilePosition(map_locations->getPoolPosition().x() + 2, map_locations->getPoolPosition().y() + 1));
+	}
+	if(!worker)
+	{
+		worker = resource_manager->getWorker();
+	}
+	if(!worker->getType().isWorker()) {
+		retval = true;
+		delete worker_position;
+		worker_position = 0;
+	} else {
+		if(worker && Broodwar->self()->minerals() < 200 && worker->getOrder().getID() != Orders::Move)
+		{
+			worker->rightClick(*worker_position);
+		} else if(worker && Broodwar->self()->minerals() >= 200) {
+			worker->build(map_locations->getPoolPosition(), UnitTypes::Zerg_Spawning_Pool);
+		}
+	}
+	return retval;
+}
+
 /**
- * Begin getters
- */
-BaseAIModule* BaseAIModule::getUnitCreator()
-{
-	return this;
-}
-
-ResourceManager* BaseAIModule::getResourceManager()
-{
-	return resource_manager;
-}
-
-ScoutingManager* BaseAIModule::getScoutingManager()
-{
-	return scouting_manager;
-}
-
-MapLocations* BaseAIModule::getMapLocations()
-{
-	return map_locations;
-}
-
-BWAPI::Unit* BaseAIModule::getMainBase()
-{
-	return main_base;
-}
-
-/**
- * Begin pre-ready unit declarations
+ * Begin forwarded events
  */
 void BaseAIModule::onUnitMorph(BWAPI::Unit* unit)
 {
@@ -378,109 +400,25 @@ void BaseAIModule::onUnitCreate(BWAPI::Unit* unit)
 }
 
 /**
- * Begin pro forma declarations
+ * Begin unused functions
  */
-void BaseAIModule::onUnitComplete(BWAPI::Unit *unit)
-{
-
-}
-
-void BaseAIModule::onEnd(bool isWinner)
-{
-	if (isWinner)
-	{
-		//log win to file
-	}
-}
-
-void BaseAIModule::onSendText(std::string text)
-{
-
-}
-
-void BaseAIModule::sendMessage(const char* text)
-{
-	Broodwar->printf(text);
-}
-
-void BaseAIModule::onReceiveText(BWAPI::Player* player, std::string text)
-{
-
-}
-
-void BaseAIModule::onPlayerLeft(BWAPI::Player* player)
-{
-
-}
-
-void BaseAIModule::onNukeDetect(BWAPI::Position target)
-{
-
-}
-
-void BaseAIModule::onUnitDiscover(BWAPI::Unit* unit)
-{
-
-}
-
-void BaseAIModule::onUnitEvade(BWAPI::Unit* unit)
-{
-
-}
-
-void BaseAIModule::onUnitShow(BWAPI::Unit* unit)
-{
-
-}
-
-void BaseAIModule::onUnitHide(BWAPI::Unit* unit)
-{
-
-}
-
-void BaseAIModule::onUnitDestroy(BWAPI::Unit* unit)
-{
-
-}
-
-void BaseAIModule::onUnitRenegade(BWAPI::Unit* unit)
-{
-
-}
-
-void BaseAIModule::onSaveGame(std::string gameName)
-{
-
-}
-
-
-void BaseAIModule::drawStats()
-{
-
-}
-
-void BaseAIModule::drawBullets()
-{
-
-}
-
-void BaseAIModule::drawVisibilityData()
-{
-
-}
-
-void BaseAIModule::drawTerrainData()
-{
-
-}
-
-void BaseAIModule::showPlayers()
-{
-
-}
-
-void BaseAIModule::showForces()
-{
-
-}
-
+void BaseAIModule::onUnitComplete(BWAPI::Unit *unit) { }
+void BaseAIModule::onEnd(bool isWinner) { if (isWinner) { /* log win to file */ } }
+void BaseAIModule::onSendText(std::string text) { }
+void BaseAIModule::sendMessage(const char* text) { }
+void BaseAIModule::onReceiveText(BWAPI::Player* player, std::string text) { }
+void BaseAIModule::onPlayerLeft(BWAPI::Player* player) { }
+void BaseAIModule::onNukeDetect(BWAPI::Position target) { }
+void BaseAIModule::onUnitDiscover(BWAPI::Unit* unit) { }
+void BaseAIModule::onUnitEvade(BWAPI::Unit* unit) { }
+void BaseAIModule::onUnitShow(BWAPI::Unit* unit) { }
+void BaseAIModule::onUnitHide(BWAPI::Unit* unit) { }
+void BaseAIModule::onUnitDestroy(BWAPI::Unit* unit) { }
+void BaseAIModule::onUnitRenegade(BWAPI::Unit* unit) { }
+void BaseAIModule::onSaveGame(std::string gameName) { }
+void BaseAIModule::drawStats() { }
+void BaseAIModule::drawBullets() { }
+void BaseAIModule::drawVisibilityData() { }
+void BaseAIModule::drawTerrainData() { }
+void BaseAIModule::showPlayers() { }
+void BaseAIModule::showForces() { }
