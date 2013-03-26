@@ -33,9 +33,9 @@ MapLocations::MapLocations(BaseAIModule* module)
 	} 
 	else 
 	{
-		hatchery_positions.push_back(new TilePosition(main_base.x() - 6, main_base.y()));
-		hatchery_positions.push_back(new TilePosition(main_base.x() - 12, main_base.y()));
 		hatchery_positions.push_back(new TilePosition(main_base.x() - 18, main_base.y()));
+		hatchery_positions.push_back(new TilePosition(main_base.x() - 12, main_base.y()));
+		hatchery_positions.push_back(new TilePosition(main_base.x() - 6, main_base.y()));
 		pool_position = TilePosition(main_base.x(), main_base.y() - 2);
 		default_overlord_position = Position(TilePosition(89,83));
 	}
