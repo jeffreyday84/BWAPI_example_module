@@ -13,6 +13,7 @@ StrategyManager::StrategyManager(BaseAIModule* module)
 {
 	ai_module = module;
 	workers_morphing = 0;
+	workers_since_pool = 0;
 	need_spawning_pool = true;
 	starting_pool = false;
 	spawning_pool_finished = false;
@@ -21,6 +22,7 @@ StrategyManager::StrategyManager(BaseAIModule* module)
 	overlord_building = false;
 	hatch_built = false;
 	hatch_started = false;
+	starting_geyser = false;
 }
 
 void StrategyManager::onStart()
@@ -43,6 +45,7 @@ void StrategyManager::onUnitReady(BWAPI::Unit* unit)
 	{
 		spawning_pool_finished = true;
 		stop_workers = true;
+		ai_module->setSpawningPool(unit);
 		Broodwar->printf("Spawning pool finished");
 	}
 	else if (unit->getType().getID() == UnitTypes::Zerg_Overlord)
@@ -52,6 +55,11 @@ void StrategyManager::onUnitReady(BWAPI::Unit* unit)
 	else if (unit->getType().getID() == UnitTypes::Zerg_Hatchery)
 	{
 		ai_module->getUnitCreator()->addProducer(unit);
+	}
+	else if (unit->getType().getID() == UnitTypes::Zerg_Extractor)
+	{
+		ai_module->getResourceManager()->addFinishedGeyser(unit);
+		ai_module->getResourceManager()->setGatherGas(true);
 	}
 }
 
@@ -70,6 +78,14 @@ void StrategyManager::onUnitAttacked(BWAPI::Unit* unit)
 
 void StrategyManager::onFrame()
 {
+	if(Broodwar->self()->gas() >= 92) 
+	{
+		ai_module->getResourceManager()->setGatherGas(false);
+		if(Broodwar->self()->gas() >= 100)
+		{
+			ai_module->getSpawningPool()->upgrade(UpgradeTypes::Metabolic_Boost);
+		}
+	}
 	if(build_queue.size())
 	{
 		if(ai_module->getUnitCreator()->makeUnit(build_queue.front()))
@@ -81,7 +97,11 @@ void StrategyManager::onFrame()
 	{
 		if(!stop_workers && (ai_module->getResourceManager()->getTargetMinsToWork() + workers_morphing) < ai_module->getResourceManager()->getNumMinsToWork())
 		{
-			workers_morphing += ai_module->makeWorker();
+			if(ai_module->makeWorker())
+			{
+				workers_morphing++;
+				if(need_spawning_pool) workers_since_pool++;
+			}
 		}
 		if(Broodwar->self()->supplyTotal() <= Broodwar->self()->supplyUsed()) {
 			if(Broodwar->self()->minerals() >= 100 && !overlord_building) {
@@ -93,13 +113,17 @@ void StrategyManager::onFrame()
 
 		if(!stop_workers)
 		{
-			if(slow_workers && workers_morphing == 3)
+			if(slow_workers && workers_since_pool == 3)
 			{
 				stop_workers = true;
 			}
 			else if(ai_module->getResourceManager()->getNumMinsToWork() > workers_morphing && Broodwar->self()->minerals() >= 50 && Broodwar->self()->supplyTotal() > Broodwar->self()->supplyUsed())
 			{
-				workers_morphing += ai_module->makeWorker();
+				if(ai_module->makeWorker())
+				{
+					workers_morphing++;
+					if(need_spawning_pool) workers_since_pool++;
+				}
 			}
 		}
 
@@ -110,7 +134,7 @@ void StrategyManager::onFrame()
 
 		if(
 				(starting_pool && need_spawning_pool) || 
-				(need_spawning_pool && Broodwar->self()->minerals() >= 180 && hatch_built)
+				(need_spawning_pool && Broodwar->self()->minerals() >= 180)
 		) {
 			Broodwar->printf("Building spawning pool at %i supply",Broodwar->self()->supplyUsed());
 			need_spawning_pool = !ai_module->buildSpawningPool();
@@ -120,6 +144,16 @@ void StrategyManager::onFrame()
 			if(!need_spawning_pool)
 			{
 				starting_pool = false;
+				starting_geyser = true;
+				workers_since_pool = 0;
+			}
+		}
+
+		if(starting_geyser && Broodwar->self()->minerals() >= 50)
+		{
+			if(ai_module->buildGeyser()) 
+			{
+				starting_geyser = false;
 				stop_workers = false;
 			}
 		}

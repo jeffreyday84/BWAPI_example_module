@@ -8,6 +8,7 @@ protected:
 	std::queue<BWAPI::UnitType> build_queue;
 	std::set<int> attacked_overlords;
 	int workers_morphing;
+	int workers_since_pool;
 	bool need_spawning_pool;
 	bool starting_pool;
 	bool spawning_pool_finished;
@@ -16,6 +17,7 @@ protected:
 	bool overlord_building;
 	bool hatch_built;
 	bool hatch_started;
+	bool starting_geyser;
 public:
 	StrategyManager(void);
 	~StrategyManager(void);

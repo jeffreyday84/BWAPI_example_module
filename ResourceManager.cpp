@@ -21,6 +21,7 @@ bool sortByDistanceFromBase(BWAPI::Unit *unit1, BWAPI::Unit *unit2)
 ResourceManager::ResourceManager(BaseAIModule* module)
 {
 	ai_module = module;
+	gather_gas = false;
 };
 
 ResourceManager::ResourceManager() {};
@@ -56,6 +57,16 @@ void ResourceManager::addBase(BWAPI::Unit* unit)
 	min_min = minerals_to_work.size();
 };
 
+void ResourceManager::addFinishedGeyser(BWAPI::Unit* geyser)
+{
+	finished_geysers.push_back(geyser);
+}
+
+void ResourceManager::setGatherGas(bool gather)
+{
+	gather_gas = gather;
+}
+
 void ResourceManager::init()
 {
 	Broodwar->printf("Initing resource manager");
@@ -64,9 +75,16 @@ void ResourceManager::init()
 void ResourceManager::addWorker(BWAPI::Unit *unit)
 {
 	workers.push_back(unit);
-	unit->rightClick(minerals_to_work.back());
-	minerals_to_work.pop_back();
-	if(minerals_to_work.size() < min_min) min_min = minerals_to_work.size();
+	if(minerals_to_work.size())
+	{
+		unit->rightClick(minerals_to_work.back());
+		minerals_to_work.pop_back();
+		if(minerals_to_work.size() < min_min) min_min = minerals_to_work.size();
+	}
+	else
+	{
+		unit->rightClick(default_mineral);
+	}
 };
 
 BWAPI::Unit* ResourceManager::getWorker() {
@@ -121,4 +139,59 @@ int ResourceManager::getTargetMinsToWork()
 int ResourceManager::getNumWorkers()
 {
 	return workers.size();
+}
+
+Unit* ResourceManager::getGeyser()
+{
+	Unit* retval = 0;
+	if(geysers_to_work.size())
+	{
+		retval = geysers_to_work.back();
+		geysers_to_work.pop_back();
+	}
+	return retval;
+}
+
+void ResourceManager::heartbeat()
+{
+	if(gather_gas)
+	{
+		if(gas_workers.size() < 3*finished_geysers.size())
+		{
+			for(unsigned int g = 0; g < finished_geysers.size(); g++)
+			{
+				int workers_on_this_gas = 0;
+				for(std::map<BWAPI::Unit*, BWAPI::Unit*>::const_iterator gw = gas_workers.begin(); gw != gas_workers.end(); gw++)
+				{
+					if(gw->second == finished_geysers[g]) workers_on_this_gas++;
+				}
+				while(workers_on_this_gas < 3)
+				{
+					Unit* new_worker = getWorker();
+					if(new_worker)
+					{
+						workers_on_this_gas++;
+						new_worker->rightClick(finished_geysers[g]);
+						gas_workers[new_worker] = finished_geysers[g];
+					}
+					else
+					{
+						return;
+					}
+				}
+			}
+		}
+	}
+	else
+	{
+		if(gas_workers.size())
+		{
+			std::vector<Unit*> moved_workers;
+			for(std::map<BWAPI::Unit*, BWAPI::Unit*>::const_iterator gw = gas_workers.begin(); gw != gas_workers.end(); gw++)
+			{
+				if(gw->first->getOrder().getID() == Orders::MoveToGas) addWorker(gw->first);
+			}
+			for(unsigned int i = 0; i < moved_workers.size(); i++) gas_workers.erase(moved_workers[i]);
+		}
+	}
 }

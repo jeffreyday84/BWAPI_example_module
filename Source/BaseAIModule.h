@@ -52,22 +52,15 @@ protected:
 	/**
 	 * Internal State
 	 */
-	int workers_morphing;
-	bool need_spawning_pool;
-	bool starting_pool;
-	bool spawning_pool_finished;
-	bool morphing_hatchery;
-	bool slow_workers;
-	bool stop_workers;
-	std::set<int> attacked_overlords;
 	std::vector<BWAPI::Unit*> unit_readiness_queue;
-	std::queue<BWAPI::UnitType> build_queue;
 	std::vector<BWAPI::Unit*> hatcheries;
 public:
 	/**
 	 * Game state functions
 	 */
 	BWAPI::Unit* getMainBase();
+	BWAPI::Unit* getSpawningPool();
+	void setSpawningPool(BWAPI::Unit*);
 
 	/**
 	 * Utility Functions
@@ -80,6 +73,7 @@ public:
 	void addProducer(BWAPI::Unit*);
 	bool buildHatchery();
 	bool buildSpawningPool();
+	bool buildGeyser();
 
 	/**
 	 * Manager Getters

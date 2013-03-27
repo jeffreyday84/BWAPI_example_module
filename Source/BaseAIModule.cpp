@@ -18,6 +18,16 @@ BWAPI::Unit* BaseAIModule::getMainBase()
 	return main_base;
 }
 
+BWAPI::Unit* BaseAIModule::getSpawningPool()
+{
+	return spawning_pool;
+}
+
+void BaseAIModule::setSpawningPool(BWAPI::Unit* unit)
+{
+	spawning_pool = unit;
+}
+
 /**
  * Begin utility functions
  */
@@ -125,15 +135,6 @@ void BaseAIModule::onStart()
 	Broodwar->sendText("Hello world!");
 	Broodwar->enableFlag(Flag::UserInput);
 
-	// Init internal variables
-	workers_morphing = 0;
-	need_spawning_pool = true;
-	spawning_pool_finished = false;
-	slow_workers = false;
-	stop_workers = false;
-	starting_pool = false;
-	spawning_pool = 0;
-
 	// Init managers and units
 	resource_manager = new ResourceManager(this);
 	scouting_manager = new ScoutingManager(this);
@@ -175,6 +176,7 @@ void BaseAIModule::onFrame()
 		{
 			scouting_manager->heartbeat();
 			army_manager->heartbeat();
+			resource_manager->heartbeat();
 		}
 	}
 
@@ -272,16 +274,53 @@ bool BaseAIModule::buildSpawningPool()
 	{
 		worker = resource_manager->getWorker();
 	}
-	if(!worker->getType().isWorker()) {
-		retval = true;
-		delete worker_position;
-		worker_position = 0;
-	} else {
-		if(worker && Broodwar->self()->minerals() < 200 && worker->getOrder().getID() != Orders::Move)
+	if(worker)
+	{
+		if(!worker->getType().isWorker()) {
+			retval = true;
+			delete worker_position;
+			worker_position = 0;
+		} else {
+			if(worker && Broodwar->self()->minerals() < 200 && worker->getOrder().getID() != Orders::Move)
+			{
+				worker->rightClick(*worker_position);
+			} else if(worker && Broodwar->self()->minerals() >= 200) {
+				worker->build(map_locations->getPoolPosition(), UnitTypes::Zerg_Spawning_Pool);
+			}
+		}
+	}
+	return retval;
+}
+
+bool BaseAIModule::buildGeyser()
+{
+	static TilePosition* geyser_position = 0;
+	static Unit* worker = 0;
+	static bool built = false;
+	bool retval = false;
+	if(!geyser_position)
+	{
+		Unit* geyser = resource_manager->getGeyser();
+		if(geyser)
 		{
-			worker->rightClick(*worker_position);
-		} else if(worker && Broodwar->self()->minerals() >= 200) {
-			worker->build(map_locations->getPoolPosition(), UnitTypes::Zerg_Spawning_Pool);
+			geyser_position = &geyser->getTilePosition();
+		}
+	}
+	if(!worker && geyser_position)
+	{
+		worker = resource_manager->getWorker();
+		worker->rightClick(Position(*geyser_position));
+	}
+	if(worker)
+	{
+		if(!worker->getType().isWorker()) {
+			Broodwar->printf("Geyser finished");
+			retval = true;
+			worker = 0;
+			geyser_position = 0;
+		} else if (Broodwar->self()->minerals() >= 50 && !built) {
+			built = worker->build(*geyser_position, UnitTypes::Zerg_Extractor);
+			Broodwar->printf("%i Building geyser - %s", Broodwar->getFrameCount(), built ? "Success!" : "Failure!");
 		}
 	}
 	return retval;
