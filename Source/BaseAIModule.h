@@ -12,6 +12,7 @@
 #include "..\ScoutingManager.h"
 #include "..\MapLocations.h"
 #include "..\ArmyManager.h"
+#include "..\StrategyManager.h"
 
 extern bool analyzed;
 extern bool analysis_just_finished;
@@ -23,6 +24,7 @@ class ResourceManager;
 class ScoutingManager;
 class MapLocations;
 class ArmyManager;
+class StrategyManager;
 class BaseAIModule : public BWAPI::AIModule
 {
 protected:
@@ -33,6 +35,7 @@ protected:
 	ScoutingManager* scouting_manager;
 	MapLocations* map_locations;
 	ArmyManager* army_manager;
+	StrategyManager* strategy_manager;
 
 	/**
 	 * Game State
@@ -45,8 +48,6 @@ protected:
 	 * Internal Methods
 	 */
 	void checkReadinessQueue();
-	void buildHatchery();
-	bool buildSpawningPool();
 
 	/**
 	 * Internal State
@@ -76,6 +77,9 @@ public:
 	int makeUnit(BWAPI::UnitType type, int num = 1);
 	int makeWorker(int num = 1);
 	int makeOverlord(int num = 1);
+	void addProducer(BWAPI::Unit*);
+	bool buildHatchery();
+	bool buildSpawningPool();
 
 	/**
 	 * Manager Getters
@@ -84,6 +88,7 @@ public:
 	ResourceManager* getResourceManager();
 	ScoutingManager* getScoutingManager();
 	MapLocations* getMapLocations();
+	ArmyManager* getArmyManager();
 
 	/**
 	 * Used events
@@ -91,7 +96,7 @@ public:
 	virtual void onStart();
 	virtual void onFrame();
 	virtual void onUnitReady(BWAPI::Unit* unit);
-	virtual void onOverlordAttacked(BWAPI::Unit* unit);
+	virtual void onUnitAttacked(BWAPI::Unit* unit);
 
 	/**
 	 * Forwarded Events

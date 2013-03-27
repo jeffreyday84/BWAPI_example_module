@@ -45,7 +45,7 @@ void ScoutingManager::heartbeat()
 			if(overlords[i]->getHitPoints() > 0)
 			{
 				Broodwar->printf("Overlord is damaged");
-				ai_module->onOverlordAttacked(overlords[i]);
+				ai_module->onUnitAttacked(overlords[i]);
 			}
 			else
 			{

@@ -192,15 +192,15 @@
 				>
 			</File>
 			<File
-				RelativePath=".\OrderManager.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\ResourceManager.cpp"
 				>
 			</File>
 			<File
 				RelativePath=".\ScoutingManager.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\StrategyManager.cpp"
 				>
 			</File>
 		</Filter>
@@ -222,15 +222,15 @@
 				>
 			</File>
 			<File
-				RelativePath=".\OrderManager.h"
-				>
-			</File>
-			<File
 				RelativePath=".\ResourceManager.h"
 				>
 			</File>
 			<File
 				RelativePath=".\ScoutingManager.h"
+				>
+			</File>
+			<File
+				RelativePath=".\StrategyManager.h"
 				>
 			</File>
 		</Filter>

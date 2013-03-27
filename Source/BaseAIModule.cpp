@@ -79,6 +79,11 @@ int BaseAIModule::makeWorker(int num)
 	return makeUnit(UnitTypes::Zerg_Drone, num);
 }
 
+void BaseAIModule::addProducer(Unit* unit)
+{
+	hatcheries.push_back(unit);
+}
+
 /**
  * Begin manager getters
  */
@@ -100,6 +105,11 @@ ScoutingManager* BaseAIModule::getScoutingManager()
 MapLocations* BaseAIModule::getMapLocations()
 {
 	return map_locations;
+}
+
+ArmyManager* BaseAIModule::getArmyManager()
+{
+	return army_manager;
 }
 
 /**
@@ -127,6 +137,7 @@ void BaseAIModule::onStart()
 	// Init managers and units
 	resource_manager = new ResourceManager(this);
 	scouting_manager = new ScoutingManager(this);
+	strategy_manager = new StrategyManager(this);
 
 	for(std::set<Unit*>::const_iterator i=Broodwar->self()->getUnits().begin();i!=Broodwar->self()->getUnits().end();i++)
 	{
@@ -159,69 +170,11 @@ void BaseAIModule::onFrame()
 	checkReadinessQueue();
 	if(Broodwar->getFrameCount() > 1) 
 	{
+		strategy_manager->onFrame();
 		if(Broodwar->getFrameCount()%12==0) 
 		{
 			scouting_manager->heartbeat();
 			army_manager->heartbeat();
-		}
-
-		if(build_queue.size())
-		{
-			if(makeUnit(build_queue.front()))
-			{
-				build_queue.pop();
-			}
-		}
-		else
-		{
-			if(!stop_workers && (resource_manager->getTargetMinsToWork() + workers_morphing) < resource_manager->getNumMinsToWork())
-			{
-				workers_morphing += makeWorker();
-			}
-			if(Broodwar->self()->supplyTotal() <= Broodwar->self()->supplyUsed()) {
-				if(Broodwar->self()->minerals() >= 100 && !overlord_building) {
-					if(makeOverlord()) overlord_building = true;
-				}
-			} else if(overlord_building) {
-				overlord_building = false;
-			}
-
-			if(!stop_workers)
-			{
-				if(slow_workers && workers_morphing == 3)
-				{
-					stop_workers = true;
-				}
-				else if(resource_manager->getNumMinsToWork() > workers_morphing && Broodwar->self()->minerals() >= 50 && Broodwar->self()->supplyTotal() > Broodwar->self()->supplyUsed())
-				{
-					workers_morphing += makeWorker();
-				}
-			}
-
-			if(spawning_pool_finished)
-			{
-				makeUnit(UnitTypes::Zerg_Zergling, 3);
-			}
-
-			if(
-					(starting_pool && need_spawning_pool) || 
-					(need_spawning_pool && Broodwar->self()->minerals() >= 180)
-			) {
-				need_spawning_pool = !buildSpawningPool();
-				starting_pool = true;
-				stop_workers = true;
-				slow_workers = true;
-				if(!need_spawning_pool)
-				{
-					starting_pool = false;
-					stop_workers = false;
-				}
-			}
-
-			if(Broodwar->self()->minerals() > 350 && Broodwar->self()->supplyUsed() >= 14)
-			{
-				buildHatchery();
-			}
 		}
 	}
 
@@ -245,86 +198,64 @@ void BaseAIModule::onFrame()
 
 void BaseAIModule::onUnitReady(Unit* unit)
 {
-	//Broodwar->printf("%s ready",unit->getType().getName().c_str());
-	if(unit->getType().getID() == UnitTypes::Zerg_Zergling)
-	{
-		army_manager->addArmyUnit(unit);
-	} 
-	else if (unit->getType().isWorker())
-	{
-		workers_morphing--;
-		resource_manager->addWorker(unit);
-	}
-	else if (unit->getType().getID() == UnitTypes::Zerg_Spawning_Pool)
-	{
-		spawning_pool_finished = true;
-		stop_workers = true;
-		Broodwar->printf("Spawning pool finished");
-	}
-	else if (unit->getType().getID() == UnitTypes::Zerg_Overlord)
-	{
-		scouting_manager->addScout(unit);
-	}
-	else if (unit->getType().getID() == UnitTypes::Zerg_Hatchery)
-	{
-		hatcheries.push_back(unit);
-	}
+	strategy_manager->onUnitReady(unit);
 }
 
-void BaseAIModule::onOverlordAttacked(Unit* unit)
+void BaseAIModule::onUnitAttacked(Unit* unit)
 {
-	int before = attacked_overlords.size();
-	attacked_overlords.insert(unit->getID());
-	if(before != attacked_overlords.size()) {
-		build_queue.push(UnitTypes::Zerg_Overlord);
-	}
+	strategy_manager->onUnitAttacked(unit);
 }
 
 /**
  * Internal functions supporting the above events
  */
-void BaseAIModule::buildHatchery()
+bool BaseAIModule::buildHatchery()
 {
+	bool retval = false;
 	static Unit* worker = 0;
 	static int tile_offset = 0;
 	static TilePosition* position = 0;
 
 	if(worker && !worker->getType().isWorker())
 	{
+		retval = true;
 		worker = 0;
 		delete position;
 		position = 0;
 	}
-
-	if(tile_offset == 0)
+	else
 	{
-		if(main_base->getTilePosition().x() < 20)
+		if(tile_offset == 0)
 		{
-			tile_offset = 6;
+			if(main_base->getTilePosition().x() < 20)
+			{
+				tile_offset = 6;
+			}
+			else
+			{
+				tile_offset = -6;
+			}
 		}
-		else
-		{
-			tile_offset = -6;
-		}
-	}
 
-	if(!worker)
-	{
-		worker = resource_manager->getWorker();
+		if(!worker)
+		{
+			worker = resource_manager->getWorker();
+			if(worker)
+			{
+				position = map_locations->popHatcheryPosition();
+			}
+			if(worker)
+			{
+				worker->move(Position(*position));
+			}
+		}
+		
 		if(worker)
 		{
-			position = map_locations->popHatcheryPosition();
-		}
-		if(worker)
-		{
-			worker->move(Position(*position));
+			worker->build(*position, UnitTypes::Zerg_Hatchery);
 		}
 	}
-	
-	if(worker)
-	{
-		worker->build(*position, UnitTypes::Zerg_Hatchery);
-	}
+	return retval;
 }
 
 bool BaseAIModule::buildSpawningPool()

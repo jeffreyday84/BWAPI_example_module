@@ -25,7 +25,7 @@ MapLocations::MapLocations(BaseAIModule* module)
 
 	if(main_base.x() < 20)
 	{
-		hatchery_positions.push_back(new TilePosition(main_base.x() + 6, main_base.y() + 6));
+		hatchery_positions.push_back(new TilePosition(main_base.x() + 18, main_base.y()));
 		hatchery_positions.push_back(new TilePosition(main_base.x() + 12, main_base.y()));
 		hatchery_positions.push_back(new TilePosition(main_base.x() + 6, main_base.y()));
 		pool_position = TilePosition(main_base.x(), main_base.y() - 2);
