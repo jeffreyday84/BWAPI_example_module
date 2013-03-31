@@ -33,6 +33,7 @@ void ArmyManager::heartbeat()
 {
 	if(army.size())
 	{
+		std::vector<Unit*> units_needing_orders;
 		for(unsigned int i = 0; i < army.size(); i++)
 		{
 			if(army[i]->getOrder().getID() == Orders::None)
@@ -43,7 +44,15 @@ void ArmyManager::heartbeat()
 			}
 			else if(army[i]->getOrder().getID() == Orders::PlayerGuard)
 			{
-								
+				units_needing_orders.push_back(army[i]);
+			}
+		}
+		if(units_needing_orders.size() && ai_module->getEnemyPlayer()->getUnits().size())
+		{
+			Unit* unit_to_attack = *(ai_module->getEnemyPlayer()->getUnits().begin());
+			for(int i = 0; i < units_needing_orders.size(); i++)
+			{
+				units_needing_orders[i]->attack(unit_to_attack->getPosition());
 			}
 		}
 	}

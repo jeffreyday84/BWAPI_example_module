@@ -122,6 +122,26 @@ ArmyManager* BaseAIModule::getArmyManager()
 	return army_manager;
 }
 
+Player* BaseAIModule::getEnemyPlayer()
+{
+	if(!enemy_player)
+	{
+		for(
+				std::set<Player*>::const_iterator i = Broodwar->getPlayers().begin(); 
+				i != Broodwar->getPlayers().end() && !enemy_player;
+				i++
+		)
+		{
+			if((*i)->isEnemy(Broodwar->self()))
+			{
+				enemy_player = *i;
+			}
+		}
+	}
+	return enemy_player;
+}
+
+
 /**
  * Begin used events and their internal functions
  */
@@ -139,6 +159,7 @@ void BaseAIModule::onStart()
 	resource_manager = new ResourceManager(this);
 	scouting_manager = new ScoutingManager(this);
 	strategy_manager = new StrategyManager(this);
+	enemy_player = 0;
 
 	for(std::set<Unit*>::const_iterator i=Broodwar->self()->getUnits().begin();i!=Broodwar->self()->getUnits().end();i++)
 	{

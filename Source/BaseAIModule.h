@@ -83,6 +83,7 @@ public:
 	ScoutingManager* getScoutingManager();
 	MapLocations* getMapLocations();
 	ArmyManager* getArmyManager();
+	BWAPI::Player* getEnemyPlayer();
 
 	/**
 	 * Used events
