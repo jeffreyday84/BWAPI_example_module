@@ -29,79 +29,8 @@ void BaseAIModule::setSpawningPool(BWAPI::Unit* unit)
 }
 
 /**
- * Begin utility functions
- */
-
-bool BaseAIModule::hasLarva()
-{
-	bool retval = false;
-	for(unsigned int i = 0; i < hatcheries.size() && !retval; ++i)
-	{
-		std::set<Unit*> larva = hatcheries[i]->getLarva();
-		if(larva.size() > 0) {
-			retval = true;
-		}
-	}
-	return retval;
-}
-
-bool BaseAIModule::hasFullLarva()
-{
-	bool retval = false;
-	for(unsigned int i = 0; i < hatcheries.size() && !retval; ++i)
-	{
-		std::set<Unit*> larva = hatcheries[i]->getLarva();
-		if(larva.size() == 3) {
-			retval = true;
-		}
-	}
-	return retval;
-}
-
-int BaseAIModule::makeUnit(UnitType type, int num) 
-{
-	int retval = 0;
-	for(unsigned int i = 0; i < hatcheries.size() && num > 0; ++i)
-	{
-		std::set<Unit*> larva = hatcheries[i]->getLarva();
-		if(larva.size() > 0) {
-			for(std::set<Unit*>::const_iterator l=larva.begin();l!=larva.end() && num > 0;l++)
-			{
-				BWAPI::Unit *this_larva = *l;
-				if(this_larva->morph(type))
-				{
-					retval++;
-					num--;
-				}
-			}
-		}
-	}
-	return retval;
-}
-
-int BaseAIModule::makeOverlord(int num)
-{
-	return makeUnit(UnitTypes::Zerg_Overlord, num);
-}
-
-int BaseAIModule::makeWorker(int num)
-{
-	return makeUnit(UnitTypes::Zerg_Drone, num);
-}
-
-void BaseAIModule::addProducer(Unit* unit)
-{
-	hatcheries.push_back(unit);
-}
-
-/**
  * Begin manager getters
  */
-BaseAIModule* BaseAIModule::getUnitCreator()
-{
-	return this;
-}
-
 ResourceManager* BaseAIModule::getResourceManager()
 {
 	return resource_manager;
@@ -120,6 +49,11 @@ MapLocations* BaseAIModule::getMapLocations()
 ArmyManager* BaseAIModule::getArmyManager()
 {
 	return army_manager;
+}
+
+UnitCreator* BaseAIModule::getUnitCreator()
+{
+	return unit_creator;
 }
 
 Player* BaseAIModule::getEnemyPlayer()
@@ -152,13 +86,14 @@ void BaseAIModule::onStart()
 	{
 		throw "This is a replay and unsupported by this AI.";
 	}
-	Broodwar->sendText("Hello world!");
+	Broodwar->sendText("Hello world! After Unit Creator refactor!");
 	Broodwar->enableFlag(Flag::UserInput);
 
 	// Init managers and units
 	resource_manager = new ResourceManager(this);
 	scouting_manager = new ScoutingManager(this);
 	strategy_manager = new StrategyManager(this);
+	unit_creator = new UnitCreator(this);
 	enemy_player = 0;
 
 	for(std::set<Unit*>::const_iterator i=Broodwar->self()->getUnits().begin();i!=Broodwar->self()->getUnits().end();i++)
@@ -166,7 +101,7 @@ void BaseAIModule::onStart()
 		if ((*i)->getType().isResourceDepot())
 		{
 			resource_manager->addBase(*i);
-			hatcheries.push_back(*i);
+			unit_creator->addProducer(*i);
 			main_base = *i;
 		}
 	}
@@ -227,124 +162,6 @@ void BaseAIModule::onUnitReady(Unit* unit)
 void BaseAIModule::onUnitAttacked(Unit* unit)
 {
 	strategy_manager->onUnitAttacked(unit);
-}
-
-/**
- * Internal functions supporting the above events
- */
-bool BaseAIModule::buildHatchery()
-{
-	bool retval = false;
-	static Unit* worker = 0;
-	static int tile_offset = 0;
-	static TilePosition* position = 0;
-
-	if(worker && !worker->getType().isWorker())
-	{
-		retval = true;
-		worker = 0;
-		delete position;
-		position = 0;
-	}
-	else
-	{
-		if(tile_offset == 0)
-		{
-			if(main_base->getTilePosition().x() < 20)
-			{
-				tile_offset = 6;
-			}
-			else
-			{
-				tile_offset = -6;
-			}
-		}
-
-		if(!worker)
-		{
-			worker = resource_manager->getWorker();
-			if(worker)
-			{
-				position = map_locations->popHatcheryPosition();
-			}
-			if(worker)
-			{
-				worker->move(Position(*position));
-			}
-		}
-		
-		if(worker)
-		{
-			worker->build(*position, UnitTypes::Zerg_Hatchery);
-		}
-	}
-	return retval;
-}
-
-bool BaseAIModule::buildSpawningPool()
-{
-	static Position* worker_position;
-	static Unit* worker;
-	bool retval = false;
-	if(!worker_position)
-	{
-		TilePosition base_pos = main_base->getTilePosition();
-		worker_position = new Position(TilePosition(map_locations->getPoolPosition().x() + 2, map_locations->getPoolPosition().y() + 1));
-	}
-	if(!worker)
-	{
-		worker = resource_manager->getWorker();
-	}
-	if(worker)
-	{
-		if(!worker->getType().isWorker()) {
-			retval = true;
-			delete worker_position;
-			worker_position = 0;
-		} else {
-			if(worker && Broodwar->self()->minerals() < 200 && worker->getOrder().getID() != Orders::Move)
-			{
-				worker->rightClick(*worker_position);
-			} else if(worker && Broodwar->self()->minerals() >= 200) {
-				worker->build(map_locations->getPoolPosition(), UnitTypes::Zerg_Spawning_Pool);
-			}
-		}
-	}
-	return retval;
-}
-
-bool BaseAIModule::buildGeyser()
-{
-	static TilePosition* geyser_position = 0;
-	static Unit* worker = 0;
-	static bool built = false;
-	bool retval = false;
-	if(!geyser_position)
-	{
-		Unit* geyser = resource_manager->getGeyser();
-		if(geyser)
-		{
-			geyser_position = &geyser->getTilePosition();
-		}
-	}
-	if(!worker && geyser_position)
-	{
-		worker = resource_manager->getWorker();
-		worker->rightClick(Position(*geyser_position));
-	}
-	if(worker)
-	{
-		if(!worker->getType().isWorker()) {
-			Broodwar->printf("Geyser finished");
-			retval = true;
-			worker = 0;
-			geyser_position = 0;
-		} else if (Broodwar->self()->minerals() >= 50 && !built) {
-			built = worker->build(*geyser_position, UnitTypes::Zerg_Extractor);
-			Broodwar->printf("%i Building geyser - %s", Broodwar->getFrameCount(), built ? "Success!" : "Failure!");
-		}
-	}
-	return retval;
 }
 
 /**

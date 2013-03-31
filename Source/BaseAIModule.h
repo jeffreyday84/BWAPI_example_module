@@ -13,6 +13,7 @@
 #include "MapLocations.h"
 #include "ArmyManager.h"
 #include "StrategyManager.h"
+#include "UnitCreator.h"
 
 extern bool analyzed;
 extern bool analysis_just_finished;
@@ -25,6 +26,7 @@ class ScoutingManager;
 class MapLocations;
 class ArmyManager;
 class StrategyManager;
+class UnitCreator;
 class BaseAIModule : public BWAPI::AIModule
 {
 protected:
@@ -36,6 +38,7 @@ protected:
 	MapLocations* map_locations;
 	ArmyManager* army_manager;
 	StrategyManager* strategy_manager;
+	UnitCreator* unit_creator;
 
 	/**
 	 * Game State
@@ -53,7 +56,6 @@ protected:
 	 * Internal State
 	 */
 	std::vector<BWAPI::Unit*> unit_readiness_queue;
-	std::vector<BWAPI::Unit*> hatcheries;
 public:
 	/**
 	 * Game state functions
@@ -63,26 +65,13 @@ public:
 	void setSpawningPool(BWAPI::Unit*);
 
 	/**
-	 * Utility Functions
-	 */
-	bool hasLarva();
-	bool hasFullLarva();
-	int makeUnit(BWAPI::UnitType type, int num = 1);
-	int makeWorker(int num = 1);
-	int makeOverlord(int num = 1);
-	void addProducer(BWAPI::Unit*);
-	bool buildHatchery();
-	bool buildSpawningPool();
-	bool buildGeyser();
-
-	/**
 	 * Manager Getters
 	 */
-	BaseAIModule* getUnitCreator();
 	ResourceManager* getResourceManager();
 	ScoutingManager* getScoutingManager();
 	MapLocations* getMapLocations();
 	ArmyManager* getArmyManager();
+	UnitCreator* getUnitCreator();
 	BWAPI::Player* getEnemyPlayer();
 
 	/**

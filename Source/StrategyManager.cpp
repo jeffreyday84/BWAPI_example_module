@@ -97,7 +97,7 @@ void StrategyManager::onFrame()
 	{
 		if(!stop_workers && (ai_module->getResourceManager()->getTargetMinsToWork() + workers_morphing) < ai_module->getResourceManager()->getNumMinsToWork())
 		{
-			if(ai_module->makeWorker())
+			if(ai_module->getUnitCreator()->makeWorker())
 			{
 				workers_morphing++;
 				if(need_spawning_pool) workers_since_pool++;
@@ -105,7 +105,7 @@ void StrategyManager::onFrame()
 		}
 		if(Broodwar->self()->supplyTotal() <= Broodwar->self()->supplyUsed()) {
 			if(Broodwar->self()->minerals() >= 100 && !overlord_building) {
-				if(ai_module->makeOverlord()) overlord_building = true;
+				if(ai_module->getUnitCreator()->makeOverlord()) overlord_building = true;
 			}
 		} else if(overlord_building) {
 			overlord_building = false;
@@ -119,7 +119,7 @@ void StrategyManager::onFrame()
 			}
 			else if(ai_module->getResourceManager()->getNumMinsToWork() > workers_morphing && Broodwar->self()->minerals() >= 50 && Broodwar->self()->supplyTotal() > Broodwar->self()->supplyUsed())
 			{
-				if(ai_module->makeWorker())
+				if(ai_module->getUnitCreator()->makeWorker())
 				{
 					workers_morphing++;
 					if(need_spawning_pool) workers_since_pool++;
@@ -129,7 +129,7 @@ void StrategyManager::onFrame()
 
 		if(spawning_pool_finished)
 		{
-			ai_module->makeUnit(UnitTypes::Zerg_Zergling, 3);
+			ai_module->getUnitCreator()->makeUnit(UnitTypes::Zerg_Zergling, 3);
 		}
 
 		if(
@@ -137,7 +137,7 @@ void StrategyManager::onFrame()
 				(need_spawning_pool && Broodwar->self()->minerals() >= 180)
 		) {
 			Broodwar->printf("Building spawning pool at %i supply",Broodwar->self()->supplyUsed());
-			need_spawning_pool = !ai_module->buildSpawningPool();
+			need_spawning_pool = !ai_module->getUnitCreator()->buildSpawningPool();
 			starting_pool = true;
 			stop_workers = true;
 			slow_workers = true;
@@ -151,7 +151,7 @@ void StrategyManager::onFrame()
 
 		if(starting_geyser && Broodwar->self()->minerals() >= 50)
 		{
-			if(ai_module->buildGeyser()) 
+			if(ai_module->getUnitCreator()->buildGeyser()) 
 			{
 				starting_geyser = false;
 				stop_workers = false;
@@ -161,7 +161,7 @@ void StrategyManager::onFrame()
 		if(hatch_started || Broodwar->self()->minerals() > 285)
 		{
 			hatch_started = true;
-			if(ai_module->buildHatchery())
+			if(ai_module->getUnitCreator()->buildHatchery())
 			{
 				hatch_built = true;
 				hatch_started = false;
