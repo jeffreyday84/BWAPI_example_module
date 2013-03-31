@@ -1,6 +1,6 @@
 #pragma once
 #include "ScoutingManager.h"
-//#include "source\BaseAIModule.h"
+//#include "BaseAIModule.h"
 using namespace BWAPI;
 
 ScoutingManager::ScoutingManager(void)

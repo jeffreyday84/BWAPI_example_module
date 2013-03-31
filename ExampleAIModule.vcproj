@@ -176,7 +176,7 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath=".\ArmyManager.cpp"
+				RelativePath=".\Source\ArmyManager.cpp"
 				>
 			</File>
 			<File
@@ -188,19 +188,23 @@
 				>
 			</File>
 			<File
-				RelativePath=".\MapLocations.cpp"
+				RelativePath=".\Source\MapLocations.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\ResourceManager.cpp"
+				RelativePath=".\Source\ResourceManager.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\ScoutingManager.cpp"
+				RelativePath=".\Source\ScoutingManager.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\StrategyManager.cpp"
+				RelativePath=".\Source\StrategyManager.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Source\UnitCreator.cpp"
 				>
 			</File>
 		</Filter>
@@ -210,7 +214,7 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
-				RelativePath=".\ArmyManager.h"
+				RelativePath=".\Source\ArmyManager.h"
 				>
 			</File>
 			<File
@@ -218,19 +222,23 @@
 				>
 			</File>
 			<File
-				RelativePath=".\MapLocations.h"
+				RelativePath=".\Source\MapLocations.h"
 				>
 			</File>
 			<File
-				RelativePath=".\ResourceManager.h"
+				RelativePath=".\Source\ResourceManager.h"
 				>
 			</File>
 			<File
-				RelativePath=".\ScoutingManager.h"
+				RelativePath=".\Source\ScoutingManager.h"
 				>
 			</File>
 			<File
-				RelativePath=".\StrategyManager.h"
+				RelativePath=".\Source\StrategyManager.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Source\UnitCreator.h"
 				>
 			</File>
 		</Filter>

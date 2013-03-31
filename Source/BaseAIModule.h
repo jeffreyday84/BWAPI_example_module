@@ -8,11 +8,11 @@
 #include <algorithm>
 #include <map>
 #include <set>
-#include "..\ResourceManager.h"
-#include "..\ScoutingManager.h"
-#include "..\MapLocations.h"
-#include "..\ArmyManager.h"
-#include "..\StrategyManager.h"
+#include "ResourceManager.h"
+#include "ScoutingManager.h"
+#include "MapLocations.h"
+#include "ArmyManager.h"
+#include "StrategyManager.h"
 
 extern bool analyzed;
 extern bool analysis_just_finished;

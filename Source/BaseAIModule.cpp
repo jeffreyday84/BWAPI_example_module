@@ -1,7 +1,7 @@
 #include "BaseAIModule.h"
-#include "..\ResourceManager.h"
-#include "..\ScoutingManager.h"
-#include "..\MapLocations.h"
+#include "ResourceManager.h"
+#include "ScoutingManager.h"
+#include "MapLocations.h"
 using namespace BWAPI;
 
 bool analyzed;

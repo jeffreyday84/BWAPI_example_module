@@ -1,5 +1,5 @@
 #include "ResourceManager.h"
-#include "source\BaseAIModule.h"
+#include "BaseAIModule.h"
 using namespace BWAPI;
 
 std::vector<BWAPI::Unit*> ResourceManager::bases;
