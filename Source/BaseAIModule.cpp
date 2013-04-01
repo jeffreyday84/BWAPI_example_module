@@ -13,11 +13,6 @@ bool overlord_building = false;
 /**
  * Begin game state functions
  */
-BWAPI::Unit* BaseAIModule::getMainBase()
-{
-	return main_base;
-}
-
 BWAPI::Unit* BaseAIModule::getSpawningPool()
 {
 	return spawning_pool;
@@ -75,6 +70,67 @@ Player* BaseAIModule::getEnemyPlayer()
 	return enemy_player;
 }
 
+/**
+ * Event management functions
+ */
+void BaseAIModule::addFrameHandler(FrameEventHandler* handler)
+{
+	removeFrameHandler(handler);
+	frame_event_handlers.push_back(handler);
+};
+
+void BaseAIModule::removeFrameHandler(FrameEventHandler* handler)
+{
+	for(unsigned int i = 0; i < frame_event_handlers.size(); i++)
+	{
+		if(frame_event_handlers[i] == handler)
+		{
+			frame_event_handlers.erase(frame_event_handlers.begin() + i);
+			return;
+		}
+	}
+};
+
+void BaseAIModule::addHeartbeatHandler(HeartbeatEventHandler* handler)
+{
+	removeHeartbeatHandler(handler);
+	heartbeat_event_handlers.push_back(handler);
+};
+
+
+void BaseAIModule::removeHeartbeatHandler(HeartbeatEventHandler* handler)
+{
+	for(unsigned int i = 0; i < heartbeat_event_handlers.size(); i++)
+	{
+		if(heartbeat_event_handlers[i] == handler)
+		{
+			heartbeat_event_handlers.erase(heartbeat_event_handlers.begin() + i);
+			return;
+		}
+	}
+};
+
+
+void BaseAIModule::addUnitReadyHandler(UnitReadyEventHandler* handler)
+{
+	removeUnitReadyHandler(handler);
+	unit_ready_event_handlers.push_back(handler);
+};
+
+
+void BaseAIModule::removeUnitReadyHandler(UnitReadyEventHandler* handler)
+{
+	for(unsigned int i = 0; i < unit_ready_event_handlers.size(); i++)
+	{
+		if(unit_ready_event_handlers[i] == handler)
+		{
+			unit_ready_event_handlers.erase(unit_ready_event_handlers.begin() + i);
+			return;
+		}
+	}
+};
+
+
 
 /**
  * Begin used events and their internal functions
@@ -89,12 +145,15 @@ void BaseAIModule::onStart()
 	Broodwar->sendText("Hello world! After Unit Creator refactor!");
 	Broodwar->enableFlag(Flag::UserInput);
 
+	enemy_player = 0;
+
 	// Init managers and units
 	resource_manager = new ResourceManager(this);
 	scouting_manager = new ScoutingManager(this);
 	strategy_manager = new StrategyManager(this);
 	unit_creator = new UnitCreator(this);
-	enemy_player = 0;
+	map_locations = new MapLocations(this);
+	army_manager = new ArmyManager(this);
 
 	for(std::set<Unit*>::const_iterator i=Broodwar->self()->getUnits().begin();i!=Broodwar->self()->getUnits().end();i++)
 	{
@@ -102,24 +161,13 @@ void BaseAIModule::onStart()
 		{
 			resource_manager->addBase(*i);
 			unit_creator->addProducer(*i);
-			main_base = *i;
 		}
 	}
 
-	map_locations = new MapLocations(this);
-	army_manager = new ArmyManager(this);
-
-	for(std::set<Unit*>::const_iterator i=Broodwar->self()->getUnits().begin();i!=Broodwar->self()->getUnits().end();i++)
-	{
-		if ((*i)->getType().isWorker())
-		{
-			resource_manager->addWorker(*i);
-		}
-		else if ((*i)->getType().getID() == UnitTypes::Zerg_Overlord)
-		{
-			scouting_manager->addScout(*i);
-		}
-	}
+	strategy_manager->onStart();
+	scouting_manager->onStart();
+	army_manager->onStart();
+	resource_manager->onStart();
 }
 
 void BaseAIModule::onFrame()
@@ -127,12 +175,17 @@ void BaseAIModule::onFrame()
 	checkReadinessQueue();
 	if(Broodwar->getFrameCount() > 1) 
 	{
-		strategy_manager->onFrame();
-		if(Broodwar->getFrameCount()%12==0) 
+		for(unsigned int i = 0; i < frame_event_handlers.size(); i++)
 		{
-			scouting_manager->heartbeat();
-			army_manager->heartbeat();
-			resource_manager->heartbeat();
+			frame_event_handlers[i]->onFrame();
+		}
+		for(
+			unsigned int i = (Broodwar->getFrameCount()%FRAMES_PER_HEARTBEAT); 
+			i < heartbeat_event_handlers.size();
+			i += FRAMES_PER_HEARTBEAT
+		)
+		{
+			heartbeat_event_handlers[i]->onHeartbeat();
 		}
 	}
 
@@ -156,7 +209,10 @@ void BaseAIModule::onFrame()
 
 void BaseAIModule::onUnitReady(Unit* unit)
 {
-	strategy_manager->onUnitReady(unit);
+	for(unsigned int i = 0; i < unit_ready_event_handlers.size(); i++)
+	{
+		unit_ready_event_handlers[i]->onUnitReady(unit);
+	}
 }
 
 void BaseAIModule::onUnitAttacked(Unit* unit)

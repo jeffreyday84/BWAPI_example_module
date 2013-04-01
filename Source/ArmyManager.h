@@ -1,7 +1,7 @@
 #pragma once
 #include "BaseAIModule.h"
 
-class ArmyManager
+class ArmyManager : public HeartbeatEventHandler
 {
 protected:
 	std::vector<BWAPI::Unit*> army;
@@ -13,6 +13,7 @@ public:
 	ArmyManager(void);
 	~ArmyManager(void);
 	ArmyManager(BaseAIModule*);
+	void onStart();
 	virtual void addArmyUnit(BWAPI::Unit*);
-	virtual void heartbeat();
+	virtual void onHeartbeat();
 };

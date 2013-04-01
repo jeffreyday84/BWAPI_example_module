@@ -27,6 +27,20 @@ StrategyManager::StrategyManager(BaseAIModule* module)
 
 void StrategyManager::onStart()
 {
+	ai_module->addFrameHandler(this);
+	ai_module->addUnitReadyHandler(this);
+	for(std::set<Unit*>::const_iterator i=Broodwar->self()->getUnits().begin();i!=Broodwar->self()->getUnits().end();i++)
+	{
+		if ((*i)->getType().isWorker())
+		{
+			ai_module->getResourceManager()->addWorker(*i);
+		}
+		else if ((*i)->getType().getID() == UnitTypes::Zerg_Overlord)
+		{
+			ai_module->getScoutingManager()->addScout(*i);
+		}
+	}
+
 }
 
 void StrategyManager::onUnitReady(BWAPI::Unit* unit)

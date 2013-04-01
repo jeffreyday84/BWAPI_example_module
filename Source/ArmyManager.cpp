@@ -15,6 +15,11 @@ ArmyManager::ArmyManager(BaseAIModule* module)
 	current_attack = ai_module->getMapLocations()->getDefaultAttackPosition();
 }
 
+void ArmyManager::onStart()
+{
+	ai_module->addHeartbeatHandler(this);
+}
+
 void ArmyManager::addArmyUnit(BWAPI::Unit* unit)
 {
 	army.push_back(unit);
@@ -29,7 +34,7 @@ void ArmyManager::setNextAttack()
 	}
 }
 
-void ArmyManager::heartbeat()
+void ArmyManager::onHeartbeat()
 {
 	if(army.size())
 	{

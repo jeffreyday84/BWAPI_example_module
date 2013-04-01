@@ -12,6 +12,11 @@ ScoutingManager::ScoutingManager(BaseAIModule* parent_module)
 	ai_module = parent_module;
 }
 
+void ScoutingManager::onStart()
+{
+	ai_module->addHeartbeatHandler(this);
+}
+
 void ScoutingManager::addScout(Unit* new_scout)
 {
 	if(new_scout->getType().getID() == UnitTypes::Zerg_Overlord)
@@ -36,7 +41,7 @@ void ScoutingManager::sendOverlords()
 	}
 }
 
-void ScoutingManager::heartbeat()
+void ScoutingManager::onHeartbeat()
 {
 	for(int i = overlords.size() - 1; i >= 0; i--)
 	{

@@ -8,12 +8,6 @@
 #include <algorithm>
 #include <map>
 #include <set>
-#include "ResourceManager.h"
-#include "ScoutingManager.h"
-#include "MapLocations.h"
-#include "ArmyManager.h"
-#include "StrategyManager.h"
-#include "UnitCreator.h"
 
 extern bool analyzed;
 extern bool analysis_just_finished;
@@ -27,6 +21,9 @@ class MapLocations;
 class ArmyManager;
 class StrategyManager;
 class UnitCreator;
+class FrameEventHandler;
+class HeartbeatEventHandler;
+class UnitReadyEventHandler;
 class BaseAIModule : public BWAPI::AIModule
 {
 protected:
@@ -43,7 +40,6 @@ protected:
 	/**
 	 * Game State
 	 */
-	BWAPI::Unit* main_base;
 	BWAPI::Unit* spawning_pool;
 	BWAPI::Player* enemy_player;
 
@@ -56,11 +52,18 @@ protected:
 	 * Internal State
 	 */
 	std::vector<BWAPI::Unit*> unit_readiness_queue;
+
+	/**
+	 * Event management
+	 */
+	static const int FRAMES_PER_HEARTBEAT = 12;
+	std::vector<FrameEventHandler*> frame_event_handlers;
+	std::vector<HeartbeatEventHandler*> heartbeat_event_handlers;
+	std::vector<UnitReadyEventHandler*> unit_ready_event_handlers;
 public:
 	/**
 	 * Game state functions
 	 */
-	BWAPI::Unit* getMainBase();
 	BWAPI::Unit* getSpawningPool();
 	void setSpawningPool(BWAPI::Unit*);
 
@@ -73,6 +76,16 @@ public:
 	ArmyManager* getArmyManager();
 	UnitCreator* getUnitCreator();
 	BWAPI::Player* getEnemyPlayer();
+
+	/**
+	 * Event handler functions
+	 */
+	void addFrameHandler(FrameEventHandler*);
+	void removeFrameHandler(FrameEventHandler*);
+	void addHeartbeatHandler(HeartbeatEventHandler*);
+	void removeHeartbeatHandler(HeartbeatEventHandler*);
+	void addUnitReadyHandler(UnitReadyEventHandler*);
+	void removeUnitReadyHandler(UnitReadyEventHandler*);
 
 	/**
 	 * Used events
@@ -112,3 +125,27 @@ public:
 	void showPlayers();
 	void showForces();
 };
+
+class FrameEventHandler
+{
+public:
+	virtual void onFrame() { };
+};
+
+class HeartbeatEventHandler
+{
+public:
+	virtual void onHeartbeat() { };
+};
+
+class UnitReadyEventHandler
+{
+public:
+	virtual void onUnitReady(BWAPI::Unit*) { };
+};
+#include "ResourceManager.h"
+#include "ScoutingManager.h"
+#include "MapLocations.h"
+#include "ArmyManager.h"
+#include "StrategyManager.h"
+#include "UnitCreator.h"

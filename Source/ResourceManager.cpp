@@ -26,6 +26,11 @@ ResourceManager::ResourceManager(BaseAIModule* module)
 
 ResourceManager::ResourceManager() {};
 
+void ResourceManager::onStart()
+{
+	ai_module->addHeartbeatHandler(this);
+}
+
 void ResourceManager::addBase(BWAPI::Unit* unit)
 {
 	bases.push_back(unit);
@@ -152,7 +157,7 @@ Unit* ResourceManager::getGeyser()
 	return retval;
 }
 
-void ResourceManager::heartbeat()
+void ResourceManager::onHeartbeat()
 {
 	if(gather_gas)
 	{

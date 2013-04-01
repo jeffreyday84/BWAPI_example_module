@@ -1,13 +1,15 @@
 #pragma once
 #include "BaseAIModule.h"
 
-class StrategyManager
+class FrameEventHandler;
+class UnitReadyEventHandler;
+class StrategyManager : public FrameEventHandler, UnitReadyEventHandler
 {
 protected:
 	BaseAIModule* ai_module;
 	std::queue<BWAPI::UnitType> build_queue;
 	std::set<int> attacked_overlords;
-	int workers_morphing;
+	int workers_morphing; 
 	int workers_since_pool;
 	bool need_spawning_pool;
 	bool starting_pool;

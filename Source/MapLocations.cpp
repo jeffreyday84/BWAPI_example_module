@@ -12,7 +12,7 @@ MapLocations::~MapLocations(void)
 MapLocations::MapLocations(BaseAIModule* module)
 {
 	ai_module = module;
-	TilePosition main_base = ai_module->getMainBase()->getTilePosition();
+	TilePosition main_base = Broodwar->self()->getStartLocation();
 
 	for(std::set< TilePosition >::iterator i = Broodwar->getStartLocations().begin(); i != Broodwar->getStartLocations().end(); i++)
 	{

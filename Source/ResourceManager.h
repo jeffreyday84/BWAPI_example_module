@@ -6,10 +6,9 @@
 #include <algorithm>
 #include <map>
 #include <set>
-//#include "BaseAIModule.h"
+#include "BaseAIModule.h"
 
-class BaseAIModule;
-class ResourceManager
+class ResourceManager : public HeartbeatEventHandler
 {
 	friend bool sortByDistanceFromBase(BWAPI::Unit *unit1, BWAPI::Unit *unit2);
 protected:
@@ -27,12 +26,13 @@ public:
 	const unsigned static int FIND_MINERAL_DISTANCE = 220;
 	ResourceManager();
 	ResourceManager(BaseAIModule* uc);
+	void onStart();
 	void addBase(BWAPI::Unit* unit);
 	void addFinishedGeyser(BWAPI::Unit*);
 	void setGatherGas(bool);
 	void init();
 	void addWorker(BWAPI::Unit *unit);
-	void heartbeat();
+	void onHeartbeat();
 	BWAPI::Unit* getWorker();
 	BWAPI::Unit* getGeyser();
 	int getNumMinsToWork();

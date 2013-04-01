@@ -8,7 +8,7 @@
 #include <set>
 #include "BaseAIModule.h"
 
-class ScoutingManager
+class ScoutingManager : public HeartbeatEventHandler
 {
 protected:
 	std::vector<BWAPI::Unit*> overlords;
@@ -18,6 +18,7 @@ protected:
 public:
 	ScoutingManager(void);
 	ScoutingManager(BaseAIModule*);
+	void onStart();
 	void addScout(BWAPI::Unit*);
-	void heartbeat();
+	void onHeartbeat();
 };
